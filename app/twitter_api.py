@@ -30,3 +30,14 @@ class Twitter_API():
             tweets.append({"date": tweet['created_at'], 'text': tweet['text']})
 
         return tweets
+    
+    def get_user_info(self, screen_name):
+        print("holaa")
+        url = "https://api.twitter.com/1.1/users/show.json"
+        params = {"screen_name": screen_name}
+
+        r = self.twitter.get(url, params=params)
+
+        r_json = r.json()
+
+        return {"title": r_json['name'], "image_url": r_json['profile_image_url_https'], "description": r_json['description']}

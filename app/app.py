@@ -31,11 +31,19 @@ class Portfolio(db.Model):
     twitter_user_name = db.Column(db.String(255))
     names = db.Column(db.String(255))
     last_names = db.Column(db.String(255))
+    description = db.Column(db.String(255))
+    image_url = db.Column(db.String(255))
+    title = db.Column(db.String(255))    
 
     def __init__(self, twitter_user, names, last_names):
         self.twitter_user_name = twitter_user
         self.names = names
         self.last_names = last_names
+
+        twitter_json = twitter.get_user_info(self.twitter_user_name)
+        self.description = twitter_json['description']
+        self.image_url = twitter_json['image_url']
+        self.title = twitter_json['title']
 
 class PortfolioSchema(ma.Schema):
     class Meta:
@@ -48,7 +56,7 @@ class PortfolioSchemaTweets(ma.Schema):
     @post_dump
     def get_tweets(self, data, **kwargs):
         data['tweets'] = twitter.last_5_tweets(data['twitter_user_name'])
-        return data
+        return data       
     
 portfolio_schema = PortfolioSchema()
 portfolio_schema_tweets = PortfolioSchemaTweets()
