@@ -1,7 +1,11 @@
 import json
+
 from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
+from marshmallow import post_dump
+
+from twitter_api import Twitter_API
 
 app = Flask(__name__)
 
@@ -12,11 +16,15 @@ with open('app/credentials.json') as f:
 db_credentials = credentials['database']
 twitter_credentials = credentials['twitter_api']
 
+# db config
 app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql+pymysql://{db_credentials["user"]}:{db_credentials["password"]}@{db_credentials["host"]}/{db_credentials["db"]}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 ma = Marshmallow(app)
+
+# twitter api config
+twitter = Twitter_API(twitter_credentials)
 
 class Portfolio(db.Model):
     idportfolio = db.Column(db.Integer, primary_key=True)
@@ -32,8 +40,18 @@ class Portfolio(db.Model):
 class PortfolioSchema(ma.Schema):
     class Meta:
         fields = ('twitter_user_name', 'names', 'last_names', 'idportfolio')
+
+class PortfolioSchemaTweets(ma.Schema):
+    class Meta:
+        fields = ('twitter_user_name', 'names', 'last_names', 'idportfolio')
+
+    @post_dump
+    def get_tweets(self, data, **kwargs):
+        data['tweets'] = twitter.last_5_tweets(data['twitter_user_name'])
+        return data
     
 portfolio_schema = PortfolioSchema()
+portfolio_schema_tweets = PortfolioSchemaTweets()
 portfolios_schema = PortfolioSchema(many=True)
 
 @app.route('/users', methods=['GET'])
@@ -45,7 +63,7 @@ def get_users():
 @app.route('/user/<id>', methods=['GET'])
 def get_user(id):
     portfolio = Portfolio.query.get_or_404(id)
-    return portfolio_schema.jsonify(portfolio)
+    return portfolio_schema_tweets.jsonify(portfolio)
 
 @app.route('/create_user', methods=['POST'])
 def create_user():
