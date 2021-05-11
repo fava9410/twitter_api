@@ -1,6 +1,6 @@
 import json
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, abort
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from marshmallow import post_dump
@@ -76,9 +76,12 @@ def get_user(id):
 
 @app.route('/create_user', methods=['POST'])
 def create_user():
-    names = request.form.get('names')
-    last_names = request.form.get('last_names')
-    twitter_user_name = request.form.get('twitter_user')
+    if 'names' in request.form and 'last_names' in request.form and 'twitter_user' in request.form:
+        names = request.form.get('names')
+        last_names = request.form.get('last_names')
+        twitter_user_name = request.form.get('twitter_user')
+    else:
+        abort(400, 'missed a required parameter')
 
     new_portfolio = Portfolio(twitter_user_name, names, last_names)
 
