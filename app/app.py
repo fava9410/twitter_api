@@ -35,15 +35,16 @@ class Portfolio(db.Model):
     image_url = db.Column(db.String(255))
     title = db.Column(db.String(255))    
 
-    def __init__(self, twitter_user, names, last_names):
-        self.twitter_user_name = twitter_user
+    def __init__(self, twitter_user_name, names, last_names):
+        self.twitter_user_name = twitter_user_name
         self.names = names
         self.last_names = last_names
 
         twitter_json = twitter.get_user_info(self.twitter_user_name)
-        self.description = twitter_json['description']
-        self.image_url = twitter_json['image_url']
-        self.title = twitter_json['title']
+        if twitter_json != {}:
+            self.description = twitter_json['description']
+            self.image_url = twitter_json['image_url']
+            self.title = twitter_json['title']
 
 class PortfolioSchema(ma.Schema):
     class Meta:
@@ -51,7 +52,7 @@ class PortfolioSchema(ma.Schema):
 
 class PortfolioSchemaTweets(ma.Schema):
     class Meta:
-        fields = ('twitter_user_name', 'names', 'last_names', 'idportfolio')
+        fields = ('twitter_user_name', 'names', 'last_names', 'image_url', 'title', 'description')
 
     @post_dump
     def get_tweets(self, data, **kwargs):
@@ -77,9 +78,9 @@ def get_user(id):
 def create_user():
     names = request.form.get('names')
     last_names = request.form.get('last_names')
-    twitter_user = request.form.get('twitter_user')
+    twitter_user_name = request.form.get('twitter_user')
 
-    new_portfolio = Portfolio(twitter_user, names, last_names)
+    new_portfolio = Portfolio(twitter_user_name, names, last_names)
 
     db.session.add(new_portfolio)
     db.session.commit()
@@ -100,7 +101,14 @@ def update_user(id):
 
     portfolio.names = request.form.get('names')
     portfolio.last_names = request.form.get('last_names')
-    portfolio.twitter_user = request.form.get('twitter_user')
+    portfolio.twitter_user_name = request.form.get('twitter_user')
+
+    # Machetazo :(
+    twitter_json = twitter.get_user_info(portfolio.twitter_user_name)
+
+    portfolio.description = twitter_json['description'] if 'description' in twitter_json else ''
+    portfolio.image_url = twitter_json['image_url'] if 'image_url' in twitter_json else ''
+    portfolio.title = twitter_json['title'] if 'title' in twitter_json else ''
 
     db.session.commit()
 
