@@ -10,7 +10,7 @@ from twitter_api import Twitter_API
 app = Flask(__name__)
 
 # load credentials
-with open('app/credentials.json') as f:
+with open('credentials.json') as f:
     credentials = json.load(f)
 
 db_credentials = credentials['database']

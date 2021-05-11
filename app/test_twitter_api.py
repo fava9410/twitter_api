@@ -6,7 +6,7 @@ class TwitterApiTest(unittest.TestCase):
 
     def setUp(self):
         # load credentials
-        with open('app/credentials.json') as f:
+        with open('credentials.json') as f:
             credentials = json.load(f)
 
         twitter_credentials = credentials['twitter_api']
